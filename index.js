@@ -19,12 +19,15 @@ var SqueezeboxAPI = module.exports = function(opts) {
   this.host = opts.host;
   this.port = opts.port;
   this.token = opts.token;
-  this.uri = "http://" + opts.host + ":" + opts.port + '/status.html?';
+  this.uri = "http://" + opts.host + ":" + opts.port + "/status.html?";
 
-  this.makeRequest = function(request) {
-    request = encodeURIComponent(JSON.stringify({}))
+  this.makeRequest = function(request, getResponse) {
     return new Promise((resolve, reject) => {
-      xhr.open('GET', this.uri + request + ';cauth=' + opts.token);
+      let fullRequest = "";
+      opts.token
+        ? (fullRequest = this.uri + request + ";cauth=" + opts.token)
+        : (fullRequest = this.uri + request);
+      xhr.open("GET", fullRequest);
       xhr.send(null);
 
       xhr.onload = function() {
