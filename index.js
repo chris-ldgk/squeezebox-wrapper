@@ -39,18 +39,28 @@ var SqueezeboxAPI = module.exports = function(opts) {
 
 function convertToQueryString(obj) {
   let queryString = "";
-  for (key in obj) {
-    queryString += encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]) + '&';
+  let queryArr = [];
+
+  // Convert object to array
+  Object.keys(obj).map(key => {
+    queryArr.push([key, obj[key]]);
+  });
+
+  for (elem in queryArr) {
+    if (queryArr.indexOf(queryArr[elem]) === queryArr.length - 1) {
+      queryString += queryArr[elem][0] + '=' + queryArr[elem][1];
+    } else {
+      queryString += queryArr[elem][0] + '=' + queryArr[elem][1] + '&';
+    }
   }
   return queryString;
 }
 
 SqueezeboxAPI.prototype.play = function() {
   let requestBody = {
-    p0: "playlist",
-    p1: "play",
-    p2: "songname"
+    p0: "play"
   };
   let request = convertToQueryString(requestBody);
   console.log(request);
 }
+
