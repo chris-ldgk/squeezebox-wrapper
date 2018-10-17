@@ -81,16 +81,28 @@ SqueezeboxAPI.prototype.getPlayers = function() {
     this.makeRequest(null, true)
       .then(res => {
         // Convert Response String to DOM
-        let responseDOM = parser.parseFromString(res, "application/xml");
-        let playerHTML = responseDOM.getElementsByName("player")[0].innerHTML;
+        let responseDOM = parser.parseFromString(res, "text/html");
+        let playerHTML = responseDOM.getElementsByTagName("select")[0].outerHTML;
 
-        // Get players from DOM
-        let players = [];
+        // Get player mac addresses from DOM
+        let playerMacs = [];
         playerHTML.replace(/value=\"(.+?)\"/g, (match) => {
           match = match.replace("value=\"", "").replace("\"", "");
-          players.push(match);
+          playerMacs.push(match);
         });
 
+        // Get player names from DOM
+        let playerNames = [];
+        playerHTML.replace(/>(.+?)</g, (match) => {
+          match = match.replace(/(>|<)/g, "");
+          playerNames.push(match);
+        })
+
+        let players = {
+          playerMacs: playerMacs,
+          playerNames: playerNames
+        };
+        
         // return players to function
         resolve(players);
       })
