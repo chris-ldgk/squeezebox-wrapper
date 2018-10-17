@@ -101,9 +101,10 @@ SqueezeboxAPI.prototype.getPlayers = function() {
         let players = [];
 
         for (index in playerNames) {
-          let playerObject = {};
-          playerObject[playerNames[index]] = playerMacs[index];
-          players.push(playerObject);
+          players.push({
+            name: playerNames[index],
+            mac: playerMacs[index]
+          });
         }
         
         // return players to function
