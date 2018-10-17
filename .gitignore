@@ -60,5 +60,8 @@ typings/
 # next.js build output
 .next
 
-#macos stuff
+# macos stuff
 .DS_Store
+
+# testfile
+test.js
