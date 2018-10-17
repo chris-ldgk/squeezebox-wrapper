@@ -98,10 +98,13 @@ SqueezeboxAPI.prototype.getPlayers = function() {
           playerNames.push(match);
         })
 
-        let players = {
-          playerMacs: playerMacs,
-          playerNames: playerNames
-        };
+        let players = [];
+
+        for (index in playerNames) {
+          let playerObject = {};
+          playerObject[playerNames[index]] = playerMacs[index];
+          players.push(playerObject);
+        }
         
         // return players to function
         resolve(players);
