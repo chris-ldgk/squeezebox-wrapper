@@ -1,7 +1,9 @@
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-const xhr = new XMLHttpRequest();
+  xhr = new XMLHttpRequest();
+  DomParser = require('dom-parser');
+  parser = new DomParser();
 
-var SqueezeboxAPI = module.exports = function(opts) {
+var SqueezeboxAPI = (module.exports = function(opts) {
   var self = this;
 
   if (!opts) {
@@ -9,11 +11,11 @@ var SqueezeboxAPI = module.exports = function(opts) {
   }
 
   if (!opts.host) {
-    throw new Error('Missing \'host\' option');
+    throw new Error("Missing 'host' option");
   }
 
   if (!opts.port) {
-    throw new Error('Missing \'port\' option');
+    throw new Error("Missing 'port' option");
   }
 
   this.host = opts.host;
@@ -31,39 +33,87 @@ var SqueezeboxAPI = module.exports = function(opts) {
       xhr.send(null);
 
       xhr.onload = function() {
-        resolve(xhr.responseText);
-      }
+        if (xhr.status === 200 || xhr.status === 204) {
+          getResponse
+            ? resolve(xhr.responseText)
+            : resolve(xhr.status)
+          
+        } else {
+          reject(xhr.status);
+        }
+      };
       xhr.onerror = function() {
-        reject(xhr.responseText);
-      }
-    })
-  }
-}
+        reject(xhr.status);
+      };
+    });
+  };
+});
 
 function convertToQueryString(obj) {
   let queryString = "";
   let queryArr = [];
 
-  // Convert object to array
+  // Convert request object to array
   Object.keys(obj).map(key => {
-    queryArr.push([key, obj[key]]);
+    if (Array.isArray(obj[key])) {
+      obj.player.map(arrObj => {
+        queryArr.push([key, arrObj]);
+      });
+    } else {
+      queryArr.push([key, obj[key]]);
+    }
   });
 
+  // Convert request Array to Querystring
   for (elem in queryArr) {
     if (queryArr.indexOf(queryArr[elem]) === queryArr.length - 1) {
-      queryString += queryArr[elem][0] + '=' + queryArr[elem][1];
+      queryString += queryArr[elem][0] + "=" + queryArr[elem][1];
     } else {
-      queryString += queryArr[elem][0] + '=' + queryArr[elem][1] + '&';
+      queryString += queryArr[elem][0] + "=" + queryArr[elem][1] + "&";
     }
   }
+
   return queryString;
 }
 
-SqueezeboxAPI.prototype.play = function() {
-  let requestBody = {
-    p0: "play"
-  };
-  let request = convertToQueryString(requestBody);
-  console.log(request);
+SqueezeboxAPI.prototype.getPlayers = function() {
+  return new Promise((resolve, reject) => {
+    this.makeRequest(null, true)
+      .then(res => {
+        // Convert Response String to DOM
+        let responseDOM = parser.parseFromString(res, "application/xml");
+        let playerHTML = responseDOM.getElementsByName("player")[0].innerHTML;
+
+        // Get players from DOM
+        let players = [];
+        playerHTML.replace(/value=\"(.+?)\"/g, (match) => {
+          match = match.replace("value=\"", "").replace("\"", "");
+          players.push(match);
+        });
+
+        // return players to function
+        resolve(players);
+      })
+      .catch(err => reject(err));
+  })
 }
 
+SqueezeboxAPI.prototype.play = function(player) {
+  let requestBody = {
+    p0: "play",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+};
+
+SqueezeboxAPI.prototype.pause = function(player) {
+  let requestBody = {
+    p0: "pause",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+};
