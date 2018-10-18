@@ -85,21 +85,22 @@ SqueezeboxAPI.prototype.getPlayers = function() {
       .then(res => {
         // Convert Response String to DOM
         let responseDOM = parser.parseFromString(res, "text/html");
-        let playerHTML = responseDOM.getElementsByTagName("select")[0].outerHTML;
+        let playerHTML = responseDOM.getElementsByTagName("select")[0]
+          .outerHTML;
 
         // Get player mac addresses from DOM
         let playerMacs = [];
-        playerHTML.replace(/value=\"(.+?)\"/g, (match) => {
-          match = match.replace("value=\"", "").replace("\"", "");
+        playerHTML.replace(/value=\"(.+?)\"/g, match => {
+          match = match.replace('value="', "").replace('"', "");
           playerMacs.push(match);
         });
 
         // Get player names from DOM
         let playerNames = [];
-        playerHTML.replace(/>(.+?)</g, (match) => {
+        playerHTML.replace(/>(.+?)</g, match => {
           match = match.replace(/(>|<)/g, "");
           playerNames.push(match);
-        })
+        });
 
         let players = [];
 
@@ -114,8 +115,8 @@ SqueezeboxAPI.prototype.getPlayers = function() {
         resolve(players);
       })
       .catch(err => reject(err));
-  })
-}
+  });
+};
 
 SqueezeboxAPI.prototype.play = function(player) {
   let requestBody = {
