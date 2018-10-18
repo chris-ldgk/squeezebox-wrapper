@@ -79,6 +79,16 @@ function convertToQueryString(obj) {
   return queryString;
 }
 
+SqueezeboxAPI.prototype.getStatus = function(player) {
+  let requestBody = {
+    p0: "status",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, true);
+};
+
 SqueezeboxAPI.prototype.getPlayers = function() {
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
