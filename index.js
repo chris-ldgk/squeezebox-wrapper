@@ -147,3 +147,15 @@ SqueezeboxAPI.prototype.pause = function(player) {
 
   return this.makeRequest(request, false);
 };
+
+SqueezeboxAPI.prototype.changeVolume = function(player, volume) {
+  let requestBody = {
+    p0: "mixer",
+    p1: "volume",
+    p2: volume,
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+};
