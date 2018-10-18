@@ -29,6 +29,7 @@ var SqueezeboxAPI = (module.exports = function(opts) {
       opts.token
         ? (fullRequest = this.uri + request + ";cauth=" + opts.token)
         : (fullRequest = this.uri + request);
+
       xhr.open("GET", fullRequest);
       xhr.send(null);
 
@@ -59,6 +60,8 @@ function convertToQueryString(obj) {
       obj.player.map(arrObj => {
         queryArr.push([key, arrObj]);
       });
+    } else if(obj[key] === null) {
+      // do nothing
     } else {
       queryArr.push([key, obj[key]]);
     }
