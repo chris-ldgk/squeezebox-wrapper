@@ -201,11 +201,11 @@ SqueezeboxAPI.prototype.getPlaying = function(player) {
         const responseDOM = new JSDOM(res);
         const responseBody = responseDOM.window.document;
 
-        const bTags = responseBody.querySelectorAll('b');
+        const bTags = responseBody.querySelectorAll("b");
         let bContents = [];
         bTags.forEach(tag => {
           bContents.push(tag.innerHTML);
-        })
+        });
 
         let isPlaying;
         if (bContents.includes("Wiedergabe")) {
@@ -213,20 +213,95 @@ SqueezeboxAPI.prototype.getPlaying = function(player) {
         } else {
           isPlaying = false;
         }
-        
+
         let response = {
           playing: isPlaying
-        }
+        };
 
         resolve(response);
       })
-      .catch(err => reject(err))
-  })
+      .catch(err => reject(err));
+  });
 };
 
 SqueezeboxAPI.prototype.skip = function(player) {
-  let requestBody = {p0: "playlist", p1: "jump", p2: "+1", player: player ? player: null};
+  let requestBody = {
+    p0: "playlist",
+    p1: "jump",
+    p2: "+1",
+    player: player ? player : null
+  };
   let request = convertToQueryString(requestBody);
 
   return this.makeRequest(request, false);
-}
+};
+
+SqueezeboxAPI.prototype.rewind = function(player) {
+  let requestBody = {
+    p0: "playlist",
+    p1: "jump",
+    p2: "-1",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+};
+
+SqueezeboxAPI.prototype.getPlaylist = function(player) {
+  let requestBody = { p0: "status", player: player ? player : null };
+  let request = convertToQueryString(requestBody);
+
+  return new Promise((resolve, reject) => {
+    this.makeRequest(request, true).then(res => {
+      fs.writeFileSync('res.html', res, {encoding: 'utf-8'});
+
+      const responseDOM = new JSDOM(res);
+      const responseBody = responseDOM.window.document;
+
+      let songDetails = responseBody.getElementsByClassName(
+        "playlistSongDetail"
+      );
+
+      let songDetailsArr = [];
+      Object.keys(songDetails).map(key => {
+        let elem = songDetails[key];
+        let innerHTML = elem.innerHTML;
+        let HTMLTagRegex = new RegExp("<[^>]*>", "g");
+        if (HTMLTagRegex.test(innerHTML)) {
+          songDetailsArr.push(innerHTML
+              .replace(HTMLTagRegex, "")
+              .replace(/(\n|\t)/g, ""));
+        } else {
+          songDetailsArr.push(innerHTML.replace(/(\n|\t)/g, ""));
+        }
+      });
+
+      let response = [];
+
+      let songNames = [];
+      let albumNames = [];
+      let artistNames = [];
+      for (let i = 0; i < songDetailsArr.length / 3; i++) {
+        if ((i + 1) % 2 === 0) {
+          artistNames.push(songDetailsArr[i]);
+        } else if ((i + 1) % 3 === 0) {
+          albumNames.push(songDetailsArr[i]);
+        } else {
+          songNames.push(songDetailsArr[i]);
+        }
+      }
+
+      songNames.map((elem, index) => {
+        response.push({
+          songName: songNames[index] ? songNames[index] : "",
+          artistName: artistNames[index] ? artistNames[index] : "",
+          albumName: albumNames[index] ? albumNames[index] : ""
+        });
+      })
+      
+      resolve(response);
+    })
+    .catch(err => reject(err))
+  });
+};
