@@ -42,7 +42,7 @@ var SqueezeboxAPI = (module.exports = function(opts) {
         }
       };
       xhr.onerror = function(error) {
-        reject("this is an error thrown by xhr: " + error);
+        reject("this is an error thrown by xhr: " + xhr.responseText);
       };
     });
   };
