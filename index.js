@@ -2,9 +2,7 @@ const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const xhr = new XMLHttpRequest();
 const jsdom = require('jsdom');
 const { JSDOM } = jsdom;
-const fs = require('fs');
-
-
+const axios = require("axios");
 
 var SqueezeboxAPI = (module.exports = function(opts) {
   if (!opts) {
@@ -31,14 +29,10 @@ var SqueezeboxAPI = (module.exports = function(opts) {
         ? (fullRequest = this.uri + request + ";cauth=" + this.token) 
         : (fullRequest = this.uri + request);
 
-      fetch(fullRequest)
+      axios.get(fullRequest)
         .then(res => {
           if (res.status === 200 || res.status === 204) {
-            res.json()
-              .then(ans => {
-                getResponse ? resolve(ans) : resolve(res.status);
-              })
-              .catch(err => reject(err));
+            getResponse ? resolve(res.data) : resolve(res.data);
           }
         })
         .catch(err => console.log(err));
@@ -79,8 +73,6 @@ SqueezeboxAPI.prototype.getPlayers = function() {
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
       .then(res => {
-        fs.writeFileSync('res.html', res, {encoding: 'utf-8'});
-
         const responseDOM = new JSDOM(res);
         const responseBody = responseDOM.window.document;
 
@@ -163,7 +155,6 @@ SqueezeboxAPI.prototype.getVolume = function (player) {
   return new Promise((resolve, reject) => {
     this.makeRequest(request, true)
       .then(res => {
-        fs.writeFileSync('res.html', res, {encoding: 'utf-8'});
         const responseDOM = new JSDOM(res);
         const responseBody = responseDOM.window.document;
 
