@@ -1,11 +1,9 @@
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
   xhr = new XMLHttpRequest();
-  DomParser = require('dom-parser');
+  DomParser = require("dom-parser");
   parser = new DomParser();
 
 var SqueezeboxAPI = (module.exports = function(opts) {
-  var self = this;
-
   if (!opts) {
     throw new Error("Please specify options");
   }
@@ -26,8 +24,8 @@ var SqueezeboxAPI = (module.exports = function(opts) {
   this.makeRequest = function(request, getResponse) {
     return new Promise((resolve, reject) => {
       let fullRequest = "";
-      opts.token
-        ? (fullRequest = this.uri + request + ";cauth=" + opts.token)
+      this.token
+        ? (fullRequest = this.uri + request + ";cauth=" + this.token)
         : (fullRequest = this.uri + request);
 
       xhr.open("GET", fullRequest);
@@ -35,10 +33,7 @@ var SqueezeboxAPI = (module.exports = function(opts) {
 
       xhr.onload = function() {
         if (xhr.status === 200 || xhr.status === 204) {
-          getResponse
-            ? resolve(xhr.responseText)
-            : resolve(xhr.status)
-          
+          getResponse ? resolve(xhr.responseText) : resolve(xhr.status);
         } else {
           reject(xhr.status);
         }
@@ -93,38 +88,20 @@ SqueezeboxAPI.prototype.getPlayers = function() {
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
       .then(res => {
-        // Convert Response String to DOM
-        let responseDOM = parser.parseFromString(res, "text/html");
-        let playerHTML = responseDOM.getElementsByTagName("select")[0]
-          .outerHTML;
-
-        // Get player mac addresses from DOM
-        let playerMacs = [];
-        playerHTML.replace(/value=\"(.+?)\"/g, match => {
-          match = match.replace('value="', "").replace('"', "");
-          playerMacs.push(match);
-        });
-
-        // Get player names from DOM
-        let playerNames = [];
-        playerHTML.replace(/>(.+?)</g, match => {
-          match = match.replace(/(>|<)/g, "");
-          playerNames.push(match);
-        });
-
+        let playerRegex = new RegExp("player=(.+?)&amp", "g");
         let players = [];
-
-        for (index in playerNames) {
-          players.push({
-            name: playerNames[index],
-            mac: playerMacs[index]
-          });
+        while ((match = playerRegex.exec(res)) !== null) {
+          if (playerRegex.lastIndex == match.index) {
+            playerRegex.lastIndex++;
+          }
+          let player = decodeURIComponent(match[1]);
+          if (!players.includes(player)) {
+            players.push(player);
+          }
         }
-        
-        // return players to function
         resolve(players);
       })
-      .catch(err => reject(err));
+      .catch(err => reject(err))
   });
 };
 
