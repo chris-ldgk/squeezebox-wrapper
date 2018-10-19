@@ -145,7 +145,7 @@ SqueezeboxAPI.prototype.pause = function(player) {
   return this.makeRequest(request, false);
 };
 
-SqueezeboxAPI.prototype.changeVolume = function(player, volume) {
+SqueezeboxAPI.prototype.setVolume = function(player, volume) {
   let requestBody = {
     p0: "mixer",
     p1: "volume",
