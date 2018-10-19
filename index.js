@@ -81,19 +81,32 @@ SqueezeboxAPI.prototype.getPlayers = function() {
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
       .then(res => {
+        fs.writeFileSync('res.html', res, {encoding: 'utf-8'});
+
         const responseDOM = new JSDOM(res);
         const responseBody = responseDOM.window.document;
 
-        let playerNames = [];
-        let h3Content = responseBody.querySelector('h3');
-        playerNames.push(h3Content.textContent);
+        let playerSelect = responseBody.querySelector("select")
 
-        let linkHref = decodeURIComponent(responseBody.querySelector("a").href);
-        let macRegex = /([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/g;
+        let playerNames = [];
         let playerMacs = [];
-        linkHref.replace(macRegex, (match) => {
-          playerMacs.push(match);
-        })
+
+        // check if select dropdown for players is available
+        if (playerSelect) {
+          playerSelect.querySelectorAll("option").forEach(option => {
+            playerMacs.push(option.value);
+            playerNames.push(option.innerHTML);
+          })
+        } else {
+          let h3Content = responseBody.querySelector('h3');
+          playerNames.push(h3Content.textContent);
+
+          let linkHref = decodeURIComponent(responseBody.querySelector("a").href);
+          let macRegex = /([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/g;
+          linkHref.replace(macRegex, (match) => {
+            playerMacs.push(match);
+          })
+        }
 
         let players = [];
 
