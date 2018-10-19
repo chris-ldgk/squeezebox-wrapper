@@ -1,6 +1,6 @@
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const xhr = new XMLHttpRequest();
-const jsdom = require('jsdom');
+const jsdom = require("jsdom");
 const { JSDOM } = jsdom;
 const axios = require("axios");
 
@@ -25,13 +25,14 @@ var SqueezeboxAPI = (module.exports = function(opts) {
   this.makeRequest = function(request, getResponse) {
     return new Promise((resolve, reject) => {
       let fullRequest = "";
-      this.token 
-        ? (fullRequest = this.uri + request + ";cauth=" + this.token) 
+      this.token
+        ? (fullRequest = this.uri + request + ";cauth=" + this.token)
         : (fullRequest = this.uri + request);
 
-      axios.get(fullRequest)
+      axios
+        .get(fullRequest)
         .then(res => {
-          if (res.status === 200 || res.status === 204) {
+          if (res.status === 200 || res.status === 204) {
             getResponse ? resolve(res.data) : resolve(res.data);
           }
         })
@@ -50,7 +51,7 @@ function convertToQueryString(obj) {
       obj.player.map(arrObj => {
         queryArr.push([key, arrObj]);
       });
-    } else if(obj[key] === null) {
+    } else if (obj[key] === null) {
       // do nothing
     } else {
       queryArr.push([key, obj[key]]);
@@ -76,7 +77,7 @@ SqueezeboxAPI.prototype.getPlayers = function() {
         const responseDOM = new JSDOM(res);
         const responseBody = responseDOM.window.document;
 
-        let playerSelect = responseBody.querySelector("select")
+        let playerSelect = responseBody.querySelector("select");
 
         let playerNames = [];
         let playerMacs = [];
@@ -86,16 +87,18 @@ SqueezeboxAPI.prototype.getPlayers = function() {
           playerSelect.querySelectorAll("option").forEach(option => {
             playerMacs.push(option.value);
             playerNames.push(option.innerHTML);
-          })
+          });
         } else {
-          let h3Content = responseBody.querySelector('h3');
+          let h3Content = responseBody.querySelector("h3");
           playerNames.push(h3Content.textContent);
 
-          let linkHref = decodeURIComponent(responseBody.querySelector("a").href);
+          let linkHref = decodeURIComponent(
+            responseBody.querySelector("a").href
+          );
           let macRegex = /([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/g;
-          linkHref.replace(macRegex, (match) => {
+          linkHref.replace(macRegex, match => {
             playerMacs.push(match);
-          })
+          });
         }
 
         let players = [];
@@ -104,12 +107,12 @@ SqueezeboxAPI.prototype.getPlayers = function() {
           players.push({
             name: playerNames[index],
             mac: playerMacs[index]
-          })
+          });
         });
 
         resolve(players);
       })
-      .catch(err => reject(err))
+      .catch(err => reject(err));
   });
 };
 
@@ -145,7 +148,7 @@ SqueezeboxAPI.prototype.setVolume = function(player, volume) {
   return this.makeRequest(request, false);
 };
 
-SqueezeboxAPI.prototype.getVolume = function (player) {
+SqueezeboxAPI.prototype.getVolume = function(player) {
   let requestBody = {
     p0: "status",
     player: player ? player : null
@@ -168,7 +171,7 @@ SqueezeboxAPI.prototype.getVolume = function (player) {
               unusedVolumes.push(parseInt(a.innerHTML));
             }
           }
-        })
+        });
 
         // get used volume by elminating all unused ones
         let usedVolume;
@@ -186,4 +189,37 @@ SqueezeboxAPI.prototype.getVolume = function (player) {
       })
       .catch(err => reject(err));
   });
+};
+
+SqueezeboxAPI.prototype.getPlaying = function(player) {
+  let requestBody = { p0: "status", player: player ? player : null };
+  let request = convertToQueryString(requestBody);
+
+  return new Promise((resolve, reject) => {
+    this.makeRequest(request, true)
+      .then(res => {
+        const responseDOM = new JSDOM(res);
+        const responseBody = responseDOM.window.document;
+
+        const bTags = responseBody.querySelectorAll('b');
+        let bContents = [];
+        bTags.forEach(tag => {
+          bContents.push(tag.innerHTML);
+        })
+
+        let isPlaying;
+        if (bContents.includes("Wiedergabe")) {
+          isPlaying = true;
+        } else {
+          isPlaying = false;
+        }
+        
+        let response = {
+          playing: isPlaying
+        }
+
+        resolve(response);
+      })
+      .catch(err => reject(err))
+  })
 };
