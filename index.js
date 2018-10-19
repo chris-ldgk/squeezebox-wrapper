@@ -38,11 +38,11 @@ var SqueezeboxAPI = (module.exports = function(opts) {
         if (xhr.status === 200 || xhr.status === 204) {
           getResponse ? resolve(xhr.responseText) : resolve(xhr.status);
         } else {
-          reject(xhr.status);
+          reject("xhr.status");
         }
       };
       xhr.onerror = function() {
-        reject(xhr.status);
+        reject("this is an error thrown by xhr");
       };
     });
   };
@@ -165,6 +165,7 @@ SqueezeboxAPI.prototype.getVolume = function (player) {
   return new Promise((resolve, reject) => {
     this.makeRequest(request, true)
       .then(res => {
+        fs.writeFileSync('res.html', res, {encoding: 'utf-8'});
         const responseDOM = new JSDOM(res);
         const responseBody = responseDOM.window.document;
 
