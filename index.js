@@ -27,23 +27,21 @@ var SqueezeboxAPI = (module.exports = function(opts) {
   this.makeRequest = function(request, getResponse) {
     return new Promise((resolve, reject) => {
       let fullRequest = "";
-      this.token
-        ? (fullRequest = this.uri + request + ";cauth=" + this.token)
+      this.token 
+        ? (fullRequest = this.uri + request + ";cauth=" + this.token) 
         : (fullRequest = this.uri + request);
 
-      xhr.open("GET", fullRequest);
-      xhr.send(null);
-
-      xhr.onload = function() {
-        if (xhr.status === 200 || xhr.status === 204) {
-          getResponse ? resolve(xhr.responseText) : resolve(xhr.status);
-        } else {
-          reject("xhr.status");
-        }
-      };
-      xhr.onerror = function(error) {
-        reject("this is an error thrown by xhr: " + xhr.responseText);
-      };
+      fetch(fullRequest)
+        .then(res => {
+          if (res.status === 200 || res.status === 204) {
+            res.json()
+              .then(ans => {
+                getResponse ? resolve(ans) : resolve(res.status);
+              })
+              .catch(err => reject(err));
+          }
+        })
+        .catch(err => console.log(err));
     });
   };
 });
