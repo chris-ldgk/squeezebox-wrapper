@@ -77,21 +77,6 @@ function convertToQueryString(obj) {
   return queryString;
 }
 
-SqueezeboxAPI.prototype.getStatus = function(player) {
-  let requestBody = {
-    p0: "status",
-    player: player ? player : null
-  };
-  let request = convertToQueryString(requestBody);
-
-  return new Promise((resolve, reject) => {
-    this.makeRequest(request, true)
-      .then(res => {
-        fs.writeFileSync('resStatus.html', res, {encoding: 'utf-8'});
-      })
-  });
-};
-
 SqueezeboxAPI.prototype.getPlayers = function() {
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
@@ -155,4 +140,47 @@ SqueezeboxAPI.prototype.setVolume = function(player, volume) {
   let request = convertToQueryString(requestBody);
 
   return this.makeRequest(request, false);
+};
+
+SqueezeboxAPI.prototype.getVolume = function (player) {
+  let requestBody = {
+    p0: "status",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return new Promise((resolve, reject) => {
+    this.makeRequest(request, true)
+      .then(res => {
+        const responseDOM = new JSDOM(res);
+        const responseBody = responseDOM.window.document;
+
+        let aTags = responseBody.querySelectorAll("a");
+
+        // make an array from all links containing volumes (unused ones)
+        let unusedVolumes = [];
+        aTags.forEach(a => {
+          if (/volume/.test(a.href)) {
+            if (!unusedVolumes.includes(parseInt(a.innerHTML))) {
+              unusedVolumes.push(parseInt(a.innerHTML));
+            }
+          }
+        })
+
+        // get used volume by elminating all unused ones
+        let usedVolume;
+        for (let i = 1; i < unusedVolumes.length + 1; i++) {
+          if (!unusedVolumes.includes(i)) {
+            usedVolume = i;
+          }
+        }
+
+        let response = {
+          volume: usedVolume
+        };
+
+        resolve(response);
+      })
+      .catch(err => reject(err));
+  });
 };
