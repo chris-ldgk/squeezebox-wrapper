@@ -41,8 +41,8 @@ var SqueezeboxAPI = (module.exports = function(opts) {
           reject("xhr.status");
         }
       };
-      xhr.onerror = function() {
-        reject("this is an error thrown by xhr");
+      xhr.onerror = function(error) {
+        reject("this is an error thrown by xhr: " + error);
       };
     });
   };
