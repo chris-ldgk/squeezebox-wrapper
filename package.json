@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/chris-ldgk/squeezebox-wrapper#readme",
   "dependencies": {
-    "dom-parser": "^0.1.5",
+    "jsdom": "^12.2.0",
     "xmlhttprequest": "^1.8.0"
   }
 }

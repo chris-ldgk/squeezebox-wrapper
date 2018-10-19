@@ -1,7 +1,10 @@
 const XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
-  xhr = new XMLHttpRequest();
-  DomParser = require("dom-parser");
-  parser = new DomParser();
+const xhr = new XMLHttpRequest();
+const jsdom = require('jsdom');
+const { JSDOM } = jsdom;
+const fs = require('fs');
+
+
 
 var SqueezeboxAPI = (module.exports = function(opts) {
   if (!opts) {
@@ -81,24 +84,41 @@ SqueezeboxAPI.prototype.getStatus = function(player) {
   };
   let request = convertToQueryString(requestBody);
 
-  return this.makeRequest(request, true);
+  return new Promise((resolve, reject) => {
+    this.makeRequest(request, true)
+      .then(res => {
+        fs.writeFileSync('resStatus.html', res, {encoding: 'utf-8'});
+      })
+  });
 };
 
 SqueezeboxAPI.prototype.getPlayers = function() {
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
       .then(res => {
-        let playerRegex = new RegExp("player=(.+?)&amp", "g");
+        const responseDOM = new JSDOM(res);
+        const responseBody = responseDOM.window.document;
+
+        let playerNames = [];
+        let h3Content = responseBody.querySelector('h3');
+        playerNames.push(h3Content.textContent);
+
+        let linkHref = decodeURIComponent(responseBody.querySelector("a").href);
+        let macRegex = /([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})/g;
+        let playerMacs = [];
+        linkHref.replace(macRegex, (match) => {
+          playerMacs.push(match);
+        })
+
         let players = [];
-        while ((match = playerRegex.exec(res)) !== null) {
-          if (playerRegex.lastIndex == match.index) {
-            playerRegex.lastIndex++;
-          }
-          let player = decodeURIComponent(match[1]);
-          if (!players.includes(player)) {
-            players.push(player);
-          }
-        }
+
+        playerNames.map((elem, index) => {
+          players.push({
+            name: playerNames[index],
+            mac: playerMacs[index]
+          })
+        });
+
         resolve(players);
       })
       .catch(err => reject(err))
