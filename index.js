@@ -33,7 +33,7 @@ var SqueezeboxAPI = (module.exports = function(opts) {
         .get(fullRequest)
         .then(res => {
           if (res.status === 200 || res.status === 204) {
-            getResponse ? resolve(res.data) : resolve(res.data);
+            getResponse ? resolve(res.data) : resolve(res.status);
           }
         })
         .catch(err => console.log(err));
@@ -223,3 +223,10 @@ SqueezeboxAPI.prototype.getPlaying = function(player) {
       .catch(err => reject(err))
   })
 };
+
+SqueezeboxAPI.prototype.skip = function(player) {
+  let requestBody = {p0: "playlist", p1: "jump", p2: "+1", player: player ? player: null};
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+}
