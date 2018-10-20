@@ -328,7 +328,6 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
         axios("http://" + this.host + ":" + this.port + songInfoLink)
           .then(res => {
             console.log(2);
-            fs.writeFileSync("res.html", res.data, { encoding: "utf-8" });
             const resDOM = new JSDOM(res.data);
             const resBody = resDOM.window.document;
 
