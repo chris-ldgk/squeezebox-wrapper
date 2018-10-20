@@ -347,9 +347,11 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
             });
 
             let response = {
-              songName: songName,
-              artistName: artistName,
-              albumName: albumName
+              currentSong: {
+                songName: songName,
+                artistName: artistName,
+                albumName: albumName
+              }
             };
 
             resolve(response);
