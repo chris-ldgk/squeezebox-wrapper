@@ -136,6 +136,30 @@ SqueezeboxAPI.prototype.pause = function(player) {
   return this.makeRequest(request, false);
 };
 
+SqueezeboxAPI.prototype.skip = function(player) {
+  let requestBody = {
+    p0: "playlist",
+    p1: "jump",
+    p2: "+1",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+};
+
+SqueezeboxAPI.prototype.rewind = function(player) {
+  let requestBody = {
+    p0: "playlist",
+    p1: "jump",
+    p2: "-1",
+    player: player ? player : null
+  };
+  let request = convertToQueryString(requestBody);
+
+  return this.makeRequest(request, false);
+};
+
 SqueezeboxAPI.prototype.setVolume = function(player, volume) {
   let requestBody = {
     p0: "mixer",
@@ -224,84 +248,114 @@ SqueezeboxAPI.prototype.getPlaying = function(player) {
   });
 };
 
-SqueezeboxAPI.prototype.skip = function(player) {
-  let requestBody = {
-    p0: "playlist",
-    p1: "jump",
-    p2: "+1",
-    player: player ? player : null
-  };
-  let request = convertToQueryString(requestBody);
-
-  return this.makeRequest(request, false);
-};
-
-SqueezeboxAPI.prototype.rewind = function(player) {
-  let requestBody = {
-    p0: "playlist",
-    p1: "jump",
-    p2: "-1",
-    player: player ? player : null
-  };
-  let request = convertToQueryString(requestBody);
-
-  return this.makeRequest(request, false);
-};
-
 SqueezeboxAPI.prototype.getPlaylist = function(player) {
   let requestBody = { p0: "status", player: player ? player : null };
   let request = convertToQueryString(requestBody);
 
   return new Promise((resolve, reject) => {
-    this.makeRequest(request, true).then(res => {
-      fs.writeFileSync('res.html', res, {encoding: 'utf-8'});
+    this.makeRequest(request, true)
+      .then(res => {
+        fs.writeFileSync("res.html", res, { encoding: "utf-8" });
 
-      const responseDOM = new JSDOM(res);
-      const responseBody = responseDOM.window.document;
+        const responseDOM = new JSDOM(res);
+        const responseBody = responseDOM.window.document;
 
-      let songDetails = responseBody.getElementsByClassName(
-        "playlistSongDetail"
-      );
+        let songDetails = responseBody.getElementsByClassName(
+          "playlistSongDetail"
+        );
 
-      let songDetailsArr = [];
-      Object.keys(songDetails).map(key => {
-        let elem = songDetails[key];
-        let innerHTML = elem.innerHTML;
-        let HTMLTagRegex = new RegExp("<[^>]*>", "g");
-        if (HTMLTagRegex.test(innerHTML)) {
-          songDetailsArr.push(innerHTML
-              .replace(HTMLTagRegex, "")
-              .replace(/(\n|\t)/g, ""));
-        } else {
-          songDetailsArr.push(innerHTML.replace(/(\n|\t)/g, ""));
-        }
-      });
-
-      let response = [];
-
-      let songNames = [];
-      let albumNames = [];
-      let artistNames = [];
-      for (let i = 0; i < songDetailsArr.length / 3; i++) {
-        if ((i + 1) % 2 === 0) {
-          artistNames.push(songDetailsArr[i]);
-        } else if ((i + 1) % 3 === 0) {
-          albumNames.push(songDetailsArr[i]);
-        } else {
-          songNames.push(songDetailsArr[i]);
-        }
-      }
-
-      songNames.map((elem, index) => {
-        response.push({
-          songName: songNames[index] ? songNames[index] : "",
-          artistName: artistNames[index] ? artistNames[index] : "",
-          albumName: albumNames[index] ? albumNames[index] : ""
+        let songDetailsArr = [];
+        Object.keys(songDetails).map(key => {
+          let elem = songDetails[key];
+          let innerHTML = elem.innerHTML;
+          let HTMLTagRegex = new RegExp("<[^>]*>", "g");
+          if (HTMLTagRegex.test(innerHTML)) {
+            songDetailsArr.push(
+              innerHTML.replace(HTMLTagRegex, "").replace(/(\n|\t)/g, "")
+            );
+          } else {
+            songDetailsArr.push(innerHTML.replace(/(\n|\t)/g, ""));
+          }
         });
+
+        let response = [];
+
+        let songNames = [];
+        let albumNames = [];
+        let artistNames = [];
+        for (let i = 0; i < songDetailsArr.length / 3; i++) {
+          if ((i + 1) % 2 === 0) {
+            artistNames.push(songDetailsArr[i]);
+          } else if ((i + 1) % 3 === 0) {
+            albumNames.push(songDetailsArr[i]);
+          } else {
+            songNames.push(songDetailsArr[i]);
+          }
+        }
+
+        songNames.map((elem, index) => {
+          response.push({
+            songName: songNames[index] ? songNames[index] : "",
+            artistName: artistNames[index] ? artistNames[index] : "",
+            albumName: albumNames[index] ? albumNames[index] : ""
+          });
+        });
+
+        resolve(response);
       })
-      
-      resolve(response);
-    })
-    .catch(err => reject(err))
+      .catch(err => reject(err));
+  });
+};
+
+SqueezeboxAPI.prototype.getCurrentSong = function(player) {
+  return new Promise((resolve, reject) => {
+    this.makeRequest(null, true)
+      .then(res => {
+        const responseDOM = new JSDOM(res);
+        const responseBody = responseDOM.window.document;
+
+        let songInfoLink;
+
+        Object.keys((links = responseBody.querySelectorAll("a"))).map(key => {
+          let elem = links[key];
+          if (/songinfo/.test(elem.href)) {
+            songInfoLink = elem.href;
+          }
+        });
+
+        axios("http://" + this.host + ":" + this.port + songInfoLink)
+          .then(res => {
+            fs.writeFileSync("res.html", res.data, { encoding: "utf-8" });
+            const resDOM = new JSDOM(res.data);
+            const resBody = resDOM.window.document;
+
+            let artistName = resBody.getElementById("ARTIST").children[1]
+              .textContent;
+            let albumName = resBody.getElementById("ALBUM").children[1]
+              .textContent;
+            let songName = "";
+
+            Object.keys(
+              (elements = resBody.getElementsByClassName("browsedbListItem"))
+            ).map(key => {
+              let elem = elements[key];
+              if (/Titel:/.test(elem.textContent)) {
+                songName = elem.textContent
+                  .replace("Titel:", "")
+                  .replace(/^\s+|\s+$/g, "");
+              }
+            });
+
+            let response = {
+              songName: songName,
+              artistName: artistName,
+              albumName: albumName
+            };
+
+            resolve(response);
+          })
+          .catch(err => reject(err));
+      })
+      .catch(err => reject(err));
   });
 };
