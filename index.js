@@ -36,7 +36,7 @@ var SqueezeboxAPI = (module.exports = function(opts) {
             getResponse ? resolve(res.data) : resolve(res.status);
           }
         })
-        .catch(err => console.log(err));
+        .catch(err => reject(err));
     });
   };
 });
@@ -308,7 +308,6 @@ SqueezeboxAPI.prototype.getPlaylist = function(player) {
 };
 
 SqueezeboxAPI.prototype.getCurrentSong = function(player) {
-  console.log(0);
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
       .then(res => {
@@ -323,11 +322,9 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
             songInfoLink = elem.href;
           }
         });
-        console.log(1);
 
         axios("http://" + this.host + ":" + this.port + songInfoLink)
           .then(res => {
-            console.log(2);
             const resDOM = new JSDOM(res.data);
             const resBody = resDOM.window.document;
 
@@ -336,7 +333,6 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
             let albumName = resBody.getElementById("ALBUM").children[1]
               .textContent;
             let songName = "";
-            console.log(4);
 
             Object.keys(
               (elements = resBody.getElementsByClassName("browsedbListItem"))
@@ -348,8 +344,6 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                   .replace(/^\s+|\s+$/g, "");
               }
             });
-
-            console.log(5);
             
             let response = {
               currentSong: {
@@ -358,8 +352,6 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                 albumName: albumName
               }
             };
-
-            console.log(response);
 
             resolve(response);
           })
