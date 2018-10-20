@@ -308,6 +308,7 @@ SqueezeboxAPI.prototype.getPlaylist = function(player) {
 };
 
 SqueezeboxAPI.prototype.getCurrentSong = function(player) {
+  console.log(0);
   return new Promise((resolve, reject) => {
     this.makeRequest(null, true)
       .then(res => {
@@ -322,9 +323,11 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
             songInfoLink = elem.href;
           }
         });
+        console.log(1);
 
         axios("http://" + this.host + ":" + this.port + songInfoLink)
           .then(res => {
+            console.log(2);
             fs.writeFileSync("res.html", res.data, { encoding: "utf-8" });
             const resDOM = new JSDOM(res.data);
             const resBody = resDOM.window.document;
