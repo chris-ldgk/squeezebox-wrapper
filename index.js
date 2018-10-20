@@ -348,7 +348,7 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                   .replace(/^\s+|\s+$/g, "");
               }
             });
-
+            
             let response = {
               currentSong: {
                 songName: songName,
@@ -356,6 +356,8 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                 albumName: albumName
               }
             };
+
+            console.log(response);
 
             resolve(response);
           })
