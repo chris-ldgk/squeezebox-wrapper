@@ -337,6 +337,7 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
             let albumName = resBody.getElementById("ALBUM").children[1]
               .textContent;
             let songName = "";
+            console.log(4);
 
             Object.keys(
               (elements = resBody.getElementsByClassName("browsedbListItem"))
@@ -348,6 +349,8 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                   .replace(/^\s+|\s+$/g, "");
               }
             });
+
+            console.log(5);
             
             let response = {
               currentSong: {
