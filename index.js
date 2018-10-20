@@ -333,6 +333,7 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
             let albumName = resBody.getElementById("ALBUM").children[1]
               .textContent;
             let songName = "";
+            let songUrl = "";
 
             Object.keys(
               (elements = resBody.getElementsByClassName("browsedbListItem"))
@@ -342,6 +343,8 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                 songName = elem.textContent
                   .replace("Titel:", "")
                   .replace(/^\s+|\s+$/g, "");
+              } else if (/URL:/.test(elem.textContent)) {
+                songURL = elem.textContent.replace("URL:", "").replace(/^\s+|\s+$/g, "");
               }
             });
             
@@ -349,7 +352,8 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
               currentSong: {
                 songName: songName,
                 artistName: artistName,
-                albumName: albumName
+                albumName: albumName,
+                songURL: songURL
               }
             };
 
