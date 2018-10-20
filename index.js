@@ -332,6 +332,7 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
               .textContent;
             let albumName = resBody.getElementById("ALBUM").children[1]
               .textContent;
+            let coverArt = resBody.getElementById("COVERART").children[0].children[0].href;
             let songName = "";
             let songUrl = "";
 
@@ -353,7 +354,8 @@ SqueezeboxAPI.prototype.getCurrentSong = function(player) {
                 songName: songName,
                 artistName: artistName,
                 albumName: albumName,
-                songURL: songURL
+                songURL: songURL,
+                coverArt: coverArt
               }
             };
 
